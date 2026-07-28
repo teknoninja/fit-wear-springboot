@@ -1,59 +1,77 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import "./List.scss";
 import Card from "../Card/Card";
-import sanityClient from "../../sanityClient"; // 1. Import Sanity client and hooks
+import { fetchProducts } from "../../lib/products";
 
 const List = ({ subCats, maxPrice, sort, catId }) => {
-  // 2. Set up state for data, loading, and errors
-  const [data, setData] = useState(null);
+  const [items, setItems] = useState([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // 3. Use useEffect to fetch data when filters change
-  useEffect(() => {
-    setLoading(true);
-    setError(false);
+  // subCats is a new array identity on every parent render, so depend on a
+  // stable string of it rather than the array itself — otherwise this refetches
+  // in a loop.
+  const subCatsKey = subCats.join(",");
 
-    // 4. Build the dynamic GROQ query
-    const query = `*[_type == "product" 
-      && $catId in categories[]._ref
-      && price <= $maxPrice
-      ${subCats.length > 0 ? `&& count((subCategories[]->_id)[@ in $subCats]) > 0` : ''}
-    ] | order(price ${sort}) {
-      _id,
-      title,
-      price,
-      oldPrice,
-      isNew,
-      "img": img.asset->url,
-      "img2": img2.asset->url
-    }`;
-
-    // 5. Define parameters for the query
-    const params = { catId, subCats, maxPrice };
-
-    // 6. Fetch data using the Sanity client
-    sanityClient
-      .fetch(query, params)
-      .then((products) => {
-        setData(products);
-        setLoading(false);
-      })
-      .catch((err) => {
+  const load = useCallback(
+    async (nextPage, append) => {
+      setLoading(true);
+      setError(false);
+      try {
+        const { items: rows, hasMore: more } = await fetchProducts({
+          categoryId: catId,
+          subCategoryIds: subCatsKey ? subCatsKey.split(",") : [],
+          maxPrice,
+          sort,
+          page: nextPage,
+        });
+        setItems((prev) => (append ? [...prev, ...rows] : rows));
+        setHasMore(more);
+      } catch (err) {
         console.error(err);
         setError(true);
-        setLoading(false);
-      });
-  }, [catId, subCats, maxPrice, sort]); // Re-fetches when any filter prop changes
+      }
+      setLoading(false);
+    },
+    [catId, subCatsKey, maxPrice, sort]
+  );
+
+  // Any filter change resets to the first page.
+  useEffect(() => {
+    setPage(0);
+    load(0, false);
+  }, [load]);
+
+  const loadMore = () => {
+    const next = page + 1;
+    setPage(next);
+    load(next, true);
+  };
+
+  if (error) return <div className="list">Something went wrong!</div>;
 
   return (
-    <div className="list">
-      {error
-        ? "Something went wrong!"
-        : loading
-        ? "loading"
-        : data?.map((item) => <Card item={item} key={item._id} />) /* 7. Update the key to use item._id */}
-    </div>
+    <>
+      <div className="list">
+        {items.map((item) => (
+          <Card item={item} key={item._id} />
+        ))}
+      </div>
+
+      {loading && <div className="listStatus">loading…</div>}
+
+      {!loading && !items.length && (
+        <div className="listStatus">No products match these filters.</div>
+      )}
+
+      {!loading && hasMore && (
+        <button className="loadMore" onClick={loadMore}>
+          LOAD MORE
+        </button>
+      )}
+    </>
   );
 };
 

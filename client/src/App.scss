@@ -1,4 +1,7 @@
 .app{
+  // index.css centres the body with flex, which would otherwise shrink-wrap
+  // the app and leave the auth/profile pages floating in a narrow column.
+  width: 100%;
 
   .link{
     color: inherit;

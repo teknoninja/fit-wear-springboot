@@ -1,26 +1,33 @@
 import React, { useState, useEffect , useRef} from "react";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import SearchIcon from "@mui/icons-material/Search";
-import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
+import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import { Link } from "react-router-dom";
 import "./Navbar.scss";
 import Cart from "../Cart/Cart";
-import sanityClient from "../../sanityClient";
+import SearchBar from "../SearchBar/SearchBar";
+import UserMenu from "../UserMenu/UserMenu";
+import { fetchCategories } from "../../lib/products";
 import { useSelector } from "react-redux";
+import { useWishlist } from "../../context/WishlistContext";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [categories, setCategories] = useState(null);
   const products = useSelector((state) => state.cart.products);
-  const cartRef = useRef(); 
-  
+  const { count: wishlistCount } = useWishlist();
+  const cartRef = useRef();
+
 
 
   useEffect(() => {
-    const query = `*[_type == "category"]{_id, title}`;
-    sanityClient.fetch(query).then(setCategories);
+    fetchCategories()
+      .then(setCategories)
+      .catch((err) => {
+        console.error(err);
+        setCategories([]);
+      });
   }, []);
 
   const handleScroll = () => {
@@ -50,15 +57,13 @@ const Navbar = () => {
     <div className="navbar">
       <div className="wrapper">
         <div className="left">
-          <div className="item">
-            <img src="/img/en.png" alt="" />
-          
+          {/* Labels the category links that follow, so they read as a group
+              rather than as loose words in the corner. */}
+          <div className="item shopByLabel">
+            <StorefrontOutlinedIcon fontSize="small" />
+            <span>Shop by</span>
           </div>
-          <div className="item">
-            <span>USA</span>
-         
-          </div>
-          
+
           {/* Dynamically render category links here */}
           {categories?.map((category) => (
             <div className="item" key={category._id}>
@@ -108,9 +113,12 @@ const Navbar = () => {
             
           </div>
           <div className="icons">
-            <SearchIcon />
-            <PersonOutlineOutlinedIcon />
-            <FavoriteBorderOutlinedIcon />
+            <SearchBar />
+            <UserMenu />
+            <Link className="wishlistIcon" to="/wishlist" title="Wishlist">
+              <FavoriteBorderOutlinedIcon />
+              {wishlistCount > 0 && <span>{wishlistCount}</span>}
+            </Link>
             <div className="cartIcon" onClick={() => setOpen(!open)}>
               <ShoppingCartOutlinedIcon />
               <span>{products.length}</span>

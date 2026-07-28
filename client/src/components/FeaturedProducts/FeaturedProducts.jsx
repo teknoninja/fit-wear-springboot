@@ -1,43 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import Card from "../Card/Card";
 import "./FeaturedProducts.scss";
-import sanityClient from "../../sanityClient"; // 1. Import the Sanity client
+import { fetchProductsByType } from "../../lib/products";
 
 const FeaturedProducts = ({ type }) => {
-  // 2. Set up state for data and loading
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  
 
   useEffect(() => {
-    // 3. Define the GROQ query to filter by type
-    const query = `*[_type == "product" && type == $type]{
-      _id,
-      title,
-      price,
-      oldPrice,
-      isNew,
-      "img": img.asset->url,
-      "img2": img2.asset->url
-    }`;
-    const params = { type };
-
+    let active = true;
     setLoading(true);
     setError(false);
 
-    // 4. Fetch the data from Sanity
-    sanityClient
-      .fetch(query, params)
+    fetchProductsByType(type)
       .then((products) => {
+        if (!active) return;
         setData(products);
         setLoading(false);
       })
       .catch((err) => {
+        if (!active) return;
         console.error(err);
         setError(true);
         setLoading(false);
       });
+
+    return () => {
+      active = false;
+    };
   }, [type]); // Re-run the query if the 'type' prop changes
 
   return (
@@ -53,7 +44,7 @@ const FeaturedProducts = ({ type }) => {
           ? "Something went wrong!"
           : loading
           ? "loading"
-          : data?.map((item) => <Card item={item} key={item._id} />) /* 5. Use item._id for the key */}
+          : data?.map((item) => <Card item={item} key={item._id} />)}
       </div>
     </div>
   );

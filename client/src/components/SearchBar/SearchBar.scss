@@ -1,0 +1,181 @@
+.searchBar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  z-index: 60;
+
+  // Collapsed state — matches the other navbar icons.
+  .searchToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--accent);
+      border-color: transparent;
+    }
+  }
+
+  // Overlaid rather than inline: the input is far wider than the icon it
+  // replaces, and expanding in-flow squeezed the navbar until the centre title
+  // collided with the nav links. Anchored right so it grows leftward over the
+  // links, leaving the account and cart icons reachable.
+  .searchOverlay {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .searchForm {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 280px;
+    padding: 7px 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+
+    &:focus-within {
+      border-color: var(--accent);
+    }
+
+    .searchGlyph {
+      color: var(--text-dim);
+      font-size: 19px;
+      flex-shrink: 0;
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+
+      &::placeholder {
+        color: var(--text-dim);
+      }
+
+      // Chrome adds its own clear button on type="search"; we have our own.
+      &::-webkit-search-cancel-button {
+        display: none;
+      }
+    }
+
+    .searchClose {
+      display: flex;
+      padding: 0;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      flex-shrink: 0;
+
+      &:hover {
+        color: var(--text);
+        border-color: transparent;
+      }
+    }
+  }
+
+  .searchPanel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 340px;
+    max-height: 60vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.6);
+    padding: 6px;
+  }
+
+  .searchNote {
+    padding: 14px 12px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .searchResult {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text);
+
+    &:hover {
+      background: var(--surface-2);
+    }
+
+    img {
+      width: 40px;
+      height: 52px;
+      object-fit: cover;
+      border-radius: 5px;
+      // Imported product shots are transparent, so they need a backdrop.
+      background: #fff;
+      flex-shrink: 0;
+    }
+
+    .searchResultTitle {
+      flex: 1;
+      min-width: 0;
+      font-size: 14px;
+      // Long generated titles would otherwise wrap to three lines.
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .searchResultPrice {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+  }
+
+  .searchSeeAll {
+    width: 100%;
+    margin-top: 4px;
+    padding: 11px;
+    background: none;
+    border: none;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    color: var(--accent);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--surface-2);
+      border-color: transparent;
+      border-top: 1px solid var(--border);
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .searchBar .searchForm {
+    width: 200px;
+  }
+  .searchBar .searchPanel {
+    width: 280px;
+  }
+}

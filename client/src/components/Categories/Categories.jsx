@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from "react";
 import "./Categories.scss";
 import { Link } from "react-router-dom";
-import sanityClient from "../../sanityClient";
+import { fetchCategories } from "../../lib/products";
 
 const Categories = () => {
   const [categories, setCategories] = useState(null);
 
   useEffect(() => {
-    const query = `*[_type == "category"]{
-      _id,
-      title,
-      "imageUrl": image.asset->url
-    }`;
-    
-    sanityClient.fetch(query).then(setCategories);
+    fetchCategories()
+      .then(setCategories)
+      .catch((err) => {
+        console.error(err);
+        setCategories([]);
+      });
   }, []);
 
   if (!categories) return <div>Loading categories...</div>;
@@ -21,7 +20,7 @@ const Categories = () => {
   // This creates a more flexible grid based on your data
   return (
     <div className="categories">
-      {categories.map((category, index) => (
+      {categories.map((category) => (
         <div className="col" key={category._id}>
           <div className="row">
             <img src={category.imageUrl} alt={category.title} />

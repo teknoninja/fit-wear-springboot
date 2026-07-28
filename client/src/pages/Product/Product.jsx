@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/cartReducer"; // 1. Corrected import path
-import sanityClient from "../../sanityClient"; // 2. Import Sanity client and hooks
+import { fetchProduct, logProductView } from "../../lib/products";
+import { useWishlist } from "../../context/WishlistContext";
+import { useAuth } from "../../context/AuthContext";
 import "./Product.scss";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 import BalanceIcon from "@mui/icons-material/Balance";
 
 const Product = () => {
@@ -15,25 +18,50 @@ const Product = () => {
   const [productData, setProductData] = useState(null);
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { isWishlisted, toggle } = useWishlist();
+  const { user } = useAuth();
 
-  // 3. Fetch data from Sanity instead of useFetch
   useEffect(() => {
-    const query = `*[_type == "product" && _id == $id][0]{
-      ...,
-      "img": img.asset->url,
-      "img2": img2.asset->url,
-    }`;
-    const params = { id };
-
+    let active = true;
     setLoading(true);
-    sanityClient.fetch(query, params).then((data) => {
-      setProductData(data);
-      setLoading(false);
-    });
-  }, [id]);
+    // Reset to the primary image when navigating between products, otherwise
+    // a product with one image inherits the previous product's "img2" state.
+    setSelectedImg("img");
+
+    fetchProduct(id)
+      .then((data) => {
+        if (!active) return;
+        setProductData(data);
+        setLoading(false);
+
+        // Feed the recommender. Fire-and-forget — see logProductView.
+        if (data) logProductView(data._id, user?.id ?? null);
+      })
+      .catch((err) => {
+        if (!active) return;
+        console.error(err);
+        setProductData(null);
+        setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id, user?.id]);
 
   if (loading) return <div>Loading...</div>;
   if (!productData) return <div>Product not found.</div>;
+
+  const saved = isWishlisted(productData._id);
+
+  const handleWishlist = async () => {
+    const { error } = await toggle(productData);
+    // The context signals "you need an account" rather than failing silently.
+    if (error?.message === "AUTH_REQUIRED") {
+      navigate("/login", { state: { from: `/product/${productData._id}` } });
+    }
+  };
 
   return (
     <div className="product">
@@ -83,6 +111,16 @@ const Product = () => {
         >
           <AddShoppingCartIcon /> ADD TO CART
         </button>
+
+        <div className="links">
+          <button
+            className={`wishlistToggle ${saved ? "saved" : ""}`}
+            onClick={handleWishlist}
+          >
+            {saved ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+            {saved ? "SAVED TO WISHLIST" : "ADD TO WISHLIST"}
+          </button>
+        </div>
         {/* ... rest of your JSX ... */}
       </div>
     </div>

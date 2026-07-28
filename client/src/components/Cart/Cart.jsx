@@ -1,16 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import "./Cart.scss";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 // 1. Correct the import path to your Redux slice
-import { removeItem, resetCart } from "../../redux/cartReducer"; 
+import { removeItem, resetCart } from "../../redux/cartReducer";
 import axios from "axios";
 import { loadStripe } from "@stripe/stripe-js";
+import { useAuth } from "../../context/AuthContext";
 
 const Cart = () => {
   const products = useSelector((state) => state.cart.products);
   const dispatch = useDispatch();
-  
+  const navigate = useNavigate();
+  const { session, isLoggedIn } = useAuth();
+  const [busy, setBusy] = useState(false);
+
 
   const totalPrice = () => {
     let total = 0;
@@ -20,28 +25,40 @@ const Cart = () => {
     return total.toFixed(2);
   };
 
-  // This payment logic will require a new backend endpoint to work with Sanity
   const handlePayment = async () => {
-    // ... your stripe logic ...
-    console.log("Stripe Key:", import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+    // Guest checkout still works, but an order can only be filed under an
+    // account if we know who is buying — so nudge people to sign in first.
+    if (!isLoggedIn) {
+      navigate("/login", { state: { from: "/" } });
+      return;
+    }
 
+    setBusy(true);
     try {
-      const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY); // Use your publishable key here
+      const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
-      // 1. Send the cart products to your serverless function
-      const response = await axios.post("/api/checkout", {
-        products,
-      });
+      // 1. Send the cart to the serverless function. The access token goes in
+      //    the Authorization header so the server can verify who the user is
+      //    with Supabase — a client-supplied user id could simply be forged.
+      const response = await axios.post(
+        "/api/checkout",
+        { products },
+        {
+          headers: session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {},
+        }
+      );
 
-      // 2. Redirect to Stripe's checkout page using the session ID from the response
-      await stripe.redirectToCheckout({
-        sessionId: response.data.id,
-      });
+      // 2. Redirect to Stripe's checkout page using the session ID.
+      await stripe.redirectToCheckout({ sessionId: response.data.id });
     } catch (err) {
       console.log(err);
+      setBusy(false);
     }
   };
-  
+
+
   return (
     <div className="cart">
       <h1>Products in your cart</h1>
@@ -68,7 +85,13 @@ const Cart = () => {
         <span>SUBTOTAL</span>
         <span>${totalPrice()}</span>
       </div>
-      <button onClick={handlePayment}>PROCEED TO CHECKOUT</button>
+      <button onClick={handlePayment} disabled={busy || !products.length}>
+        {busy
+          ? "REDIRECTING…"
+          : isLoggedIn
+          ? "PROCEED TO CHECKOUT"
+          : "SIGN IN TO CHECKOUT"}
+      </button>
       <span className="reset" onClick={() => dispatch(resetCart())}>
         Reset Cart
       </span>

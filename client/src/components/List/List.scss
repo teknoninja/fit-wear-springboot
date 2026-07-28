@@ -3,3 +3,35 @@
     justify-content: space-between;
     flex-wrap: wrap;
   }
+
+// Fills the trailing gap so a final row of 1-2 cards does not stretch across
+// the whole width, now that listings can be any length.
+.list::after{
+  content: "";
+  flex: auto;
+}
+
+.listStatus{
+  padding: 20px 0 40px;
+  color: var(--text-muted);
+}
+
+.loadMore{
+  display: block;
+  margin: 10px auto 50px;
+  padding: 13px 40px;
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+
+  &:hover{
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+}

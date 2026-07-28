@@ -28,9 +28,14 @@ export const cartSlice = createSlice({
     resetCart: (state) => {
       state.products = [];
     },
+    // Replaces the whole cart. Used by the cart-sync hook when a user logs in
+    // and we merge their saved server cart with whatever is in this browser.
+    setCart: (state, action) => {
+      state.products = action.payload ?? [];
+    },
   },
 });
 
-export const { addToCart, removeItem, resetCart } = cartSlice.actions;
+export const { addToCart, removeItem, resetCart, setCart } = cartSlice.actions;
 
 export default cartSlice.reducer;

@@ -1,9 +1,13 @@
 .navbar {
     height: 80px;
-    // ... any other styles for your navbar ...
+    background-color: var(--bg);
+    color: var(--text);
+    position: sticky;
+    top: 0;
+    z-index: 100;
 
 .hover-underline {
-  color: #ffffff; // Make sure this color matches your design
+  color: var(--text); // was hardcoded #ffffff, invisible on a light page
   text-decoration: none; // Removes the default underline from links
   position: relative;
   display: inline-block;
@@ -46,9 +50,10 @@
   position: absolute;
   top: 100%;
   left: 0;
-  background: white;
+  background: var(--surface);
+  border: 1px solid var(--border);
   min-width: 160px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
   border-radius: 0.5rem;
 
   /* Animation styles */
@@ -67,14 +72,15 @@
 
 /* Links inside the dropdown */
 .dropdown-menu a {
-  color: #374151;
+  color: var(--text);
   padding: 0.75rem 1rem; /* A bit more padding for better feel */
   text-decoration: none;
   display: block;
 }
 
 .dropdown-menu a:hover {
-  background: #e3e8f0;
+  background: var(--surface-2);
+  color: var(--accent-hover);
   border-radius: 0.5rem;
 }
 
@@ -95,6 +101,20 @@
         display: flex;
         align-items: center;
         gap: 25px;
+
+        // Replaces the old flag + "USA". Muted and non-interactive so it reads
+        // as a label for the category links rather than another link.
+        .shopByLabel {
+          gap: 6px;
+          color: var(--text-dim);
+          font-size: 13px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          padding-right: 20px;
+          border-right: 1px solid var(--border);
+          cursor: default;
+          user-select: none;
+        }
       }
       .center {
         font-size: 30px;
@@ -107,13 +127,40 @@
   
         .icons {
           display: flex;
+          align-items: center;
           gap: 15px;
-          color: #777;
+          color: var(--text-muted);
           cursor: pointer;
-  
+
+          .wishlistIcon {
+            position: relative;
+            display: flex;
+            align-items: center;
+            color: inherit;
+
+            &:hover {
+              color: #2879fe;
+            }
+
+            span {
+              font-size: 12px;
+              width: 20px;
+              height: 20px;
+              border-radius: 50%;
+              background-color: #2879fe;
+              color: white;
+              position: absolute;
+              right: -10px;
+              top: -10px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+          }
+
           .cartIcon {
             position: relative;
-  
+
             span {
               font-size: 12px;
               width: 20px;

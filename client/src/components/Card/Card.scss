@@ -10,25 +10,38 @@
       height: 400px;
       overflow: hidden;
       position: relative;
-  
-      &:hover{
-        .secondImg{
-          z-index: 3;
-        }
-      }
-  
+      background-color: #fff;
+
       img{
         width: 100%;
         height: 100%;
         object-fit: cover;
         position: absolute;
+        top: 0;
+        left: 0;
+        // Imported product shots are transparent WebPs. Without an opaque
+        // backdrop on each image, the one stacked underneath shows through the
+        // cut-out and both products appear at once.
+        background-color: #fff;
+        transition: opacity 0.4s ease;
       }
-  
+
+      // Both sit stacked and fully opaque; the swap is done by fading the top
+      // one out, not by reordering z-index — reordering alone cannot hide a
+      // transparent image.
       .mainImg{
         z-index: 2;
+        opacity: 1;
       }
       .secondImg{
         z-index: 1;
+        opacity: 1;
+      }
+
+      &:hover{
+        .mainImg{
+          opacity: 0;
+        }
       }
   
       span{
@@ -41,6 +54,38 @@
         z-index: 3;
         font-weight: 500;
         font-size: 12px;
+      }
+
+      // Sits above both product images (z-index 2 and 3) so it stays clickable
+      // when the hover swap brings the second image forward.
+      .wishlistBtn{
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        z-index: 4;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.92);
+        color: #777;
+        cursor: pointer;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+        transition: color 0.2s, background-color 0.2s;
+
+        &:hover{
+          border-color: transparent;
+          background: #fff;
+          color: #e0245e;
+        }
+
+        &.saved{
+          color: #e0245e;
+        }
       }
     }
   

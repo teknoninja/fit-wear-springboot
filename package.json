@@ -1,6 +1,14 @@
 {
+  "name": "e-store",
+  "private": true,
+  "//": "type:module is required — api/*.js use import/export, which Node rejects in .js files unless the package is declared as ESM.",
+  "type": "module",
+  "scripts": {
+    "import:products": "node scripts/import-products.mjs"
+  },
   "dependencies": {
     "@sanity/client": "^7.11.2",
+    "@supabase/supabase-js": "^2.110.8",
     "stripe": "^18.5.0"
   }
 }

@@ -50,7 +50,7 @@
         display: flex;
         align-items: center;
         gap: 10px;
-  
+
         button{
           width: 50px;
           height: 50px;
@@ -58,14 +58,17 @@
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          border: none;
+          border: 1px solid var(--border);
+          background-color: var(--surface-2);
+          color: var(--text);
+          font-size: 20px;
         }
       }
-  
+
       .add{
         width: 250px;
         padding: 10px;
-        background-color: #2879fe;
+        background-color: var(--accent);
         color: white;
         display: flex;
         align-items: center;
@@ -79,7 +82,7 @@
       .links{
         display: flex;
         gap: 20px;
-  
+
         .item{
           display: flex;
           align-items: center;
@@ -87,24 +90,48 @@
           color: #2879fe;
           font-size: 14px;
         }
+
+        .wishlistToggle{
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 0;
+          background: none;
+          border: none;
+          border-radius: 0;
+          color: #2879fe;
+          font-size: 14px;
+          font-weight: 500;
+          font-family: inherit;
+          cursor: pointer;
+
+          &:hover{
+            border-color: transparent;
+            opacity: 0.75;
+          }
+
+          &.saved{
+            color: #e0245e;
+          }
+        }
       }
   
       .info{
         display: flex;
         flex-direction: column;
         gap: 10px;
-        color: gray;
+        color: var(--text-muted);
         font-size: 14px;
         margin-top: 30px;
-  
+
         hr{
           width: 200px;
-          border: 1px solid rgb(240, 205, 166);
+          border: 1px solid var(--border);
         }
       }
-  
+
       hr{
-        border: 1px solid rgb(243, 215, 167);
+        border: 1px solid var(--border);
       }
   
     }
