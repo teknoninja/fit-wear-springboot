@@ -8,15 +8,30 @@ import { createClient } from "@supabase/supabase-js";
 // It must only ever live in Vercel env vars and never be sent to the browser.
 // Note the name has no VITE_ prefix, which is what stops Vite from inlining it
 // into the client bundle.
+// Env values pasted into a dashboard routinely arrive with a stray space or
+// wrapping quotes, and supabase-js rejects anything that does not start with
+// http(s):// — which surfaces as a 500 at checkout rather than anything
+// obviously configuration-related. Normalise before use.
+const clean = (value) =>
+  (value ?? "")
+    .trim()
+    .replace(/^["']|["']$/g, "")
+    .trim();
+
 export const supabaseAdmin = () => {
-  const url = process.env.SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  let url = clean(process.env.SUPABASE_URL);
+  const serviceKey = clean(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
   if (!url || !serviceKey) {
     throw new Error(
       "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variable."
     );
   }
+
+  // Accept a bare host, and tolerate someone pasting the REST endpoint instead
+  // of the project URL — the client appends /rest/v1 itself.
+  if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+  url = url.replace(/\/+$/, "").replace(/\/rest\/v1$/i, "");
 
   return createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
