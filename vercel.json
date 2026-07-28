@@ -1,36 +1,9 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-
-  "//": [
-    "This repo has an unusual shape: the Vite app lives in client/ while the",
-    "serverless functions live in api/ at the root. Vercel cannot infer that,",
-    "so both halves are spelled out here.",
-    "",
-    "Leave the project's Root Directory blank in the Vercel dashboard. Setting",
-    "it to 'client' would build the frontend but leave api/ outside the",
-    "deployment, and every /api call would 404."
-  ],
-
+  "$schema": "openapi.vercel.sh/vercel.json",
   "framework": null,
-
   "installCommand": "npm install && npm install --prefix client",
-
   "buildCommand": "npm run build --prefix client",
-
   "outputDirectory": "client/dist",
-
-  "rewrites": [
-    {
-      "//": "SPA fallback: every path that is not an /api call is served index.html so React Router can handle it. Without this, refreshing /profile or opening a /product/... link directly returns 404.",
-      "source": "/((?!api/).*)",
-      "destination": "/index.html"
-    }
-  ],
-
-  "functions": {
-    "api/*.js": {
-      "memory": 1024,
-      "maxDuration": 15
-    }
-  }
+  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }],
+  "functions": { "api/*.js": { "memory": 1024, "maxDuration": 15 } }
 }
