@@ -20,6 +20,7 @@
     "axios": "^1.12.2",
     "e-store": "file:..",
     "framer-motion": "^12.23.22",
+    "pg": "^8.23.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-redux": "^9.2.0",

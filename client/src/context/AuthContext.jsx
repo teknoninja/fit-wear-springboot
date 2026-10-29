@@ -3,11 +3,10 @@
 // The single source of truth for "who is logged in". Everything else in the app
 // (navbar, protected routes, wishlist, checkout) reads from useAuth().
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import supabase from "../lib/supabaseClient";
+import apiClient from "../lib/apiClient";
 
 const AuthContext = createContext(null);
 
-// Exported next to the provider on purpose — it only costs full-file HMR here.
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
@@ -18,37 +17,28 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
-  // Starts true so protected routes show a spinner instead of bouncing a
-  // logged-in user to /login during the first render.
   const [loading, setLoading] = useState(true);
 
   const user = session?.user ?? null;
 
+  // 1. Read session from localStorage on startup
   useEffect(() => {
-    let active = true;
+    const storedToken = localStorage.getItem("estore_token");
+    const storedUser = localStorage.getItem("estore_user");
 
-    // 1. Read whatever session is already in localStorage.
-    supabase.auth.getSession().then(({ data }) => {
-      if (!active) return;
-      setSession(data.session);
-      setLoading(false);
-    });
-
-    // 2. Then keep it in sync: sign in, sign out, token refresh, OAuth return.
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-      setLoading(false);
-    });
-
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
+    if (storedToken && storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setSession({ access_token: storedToken, user: parsedUser });
+      } catch {
+        localStorage.removeItem("estore_token");
+        localStorage.removeItem("estore_user");
+      }
+    }
+    setLoading(false);
   }, []);
 
-  // Load the matching profile row whenever the user changes.
+  // 2. Load profile row whenever user changes
   useEffect(() => {
     if (!user) {
       setProfile(null);
@@ -56,14 +46,12 @@ export const AuthProvider = ({ children }) => {
     }
     let active = true;
 
-    supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .maybeSingle()
+    apiClient
+      .get(`/profiles/${user.id}`)
       .then(({ data }) => {
         if (active) setProfile(data);
-      });
+      })
+      .catch(() => {});
 
     return () => {
       active = false;
@@ -71,64 +59,68 @@ export const AuthProvider = ({ children }) => {
   }, [user?.id]);
 
   // --- actions -------------------------------------------------------------
-  // Each returns { error } so the calling form can show the message inline
-  // instead of every screen having to wrap calls in try/catch.
 
   const signUp = async ({ email, password, fullName }) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        // Picked up by the handle_new_user() trigger to fill in profiles.full_name.
-        data: { full_name: fullName },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (error) return { error };
+    try {
+      const { data } = await apiClient.post("/auth/register", {
+        email,
+        password,
+        fullName,
+      });
 
-    // With "Confirm email" on (the Supabase default), there is no session yet —
-    // the user has to click the link in their inbox first.
-    return { error: null, needsEmailConfirmation: !data.session };
+      localStorage.setItem("estore_token", data.token);
+      localStorage.setItem("estore_user", JSON.stringify(data.user));
+      setSession({ access_token: data.token, user: data.user });
+      return { error: null, needsEmailConfirmation: false };
+    } catch (err) {
+      const message = err.response?.data?.error || err.message || "Registration failed";
+      return { error: new Error(message) };
+    }
   };
 
   const signIn = async ({ email, password }) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error };
+    try {
+      const { data } = await apiClient.post("/auth/login", {
+        email,
+        password,
+      });
+
+      localStorage.setItem("estore_token", data.token);
+      localStorage.setItem("estore_user", JSON.stringify(data.user));
+      setSession({ access_token: data.token, user: data.user });
+      return { error: null };
+    } catch (err) {
+      const message = err.response?.data?.error || err.message || "Invalid email or password";
+      return { error: new Error(message) };
+    }
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
+    localStorage.removeItem("estore_token");
+    localStorage.removeItem("estore_user");
+    setSession(null);
+    setProfile(null);
+    return { error: null };
   };
 
-  // Sends the "reset your password" email. The link lands on /reset-password
-  // with a recovery session already active, which is what lets updatePassword
-  // work there without the old password.
-  const sendPasswordReset = async (email) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    return { error };
+  const sendPasswordReset = async () => {
+    return { error: new Error("Password reset is managed by admin in this demo.") };
   };
 
-  const updatePassword = async (newPassword) => {
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    return { error };
+  const updatePassword = async () => {
+    return { error: new Error("Password update is managed by profile in this demo.") };
   };
 
   const updateProfile = async (fields) => {
     if (!user) return { error: new Error("Not signed in") };
 
-    // upsert, not update: covers the edge case where the signup trigger did not
-    // run (e.g. a user created straight from the Supabase dashboard).
-    const { data, error } = await supabase
-      .from("profiles")
-      .upsert({ id: user.id, ...fields, updated_at: new Date().toISOString() })
-      .select()
-      .single();
-
-    if (!error) setProfile(data);
-    return { error };
+    try {
+      const { data } = await apiClient.put(`/profiles/${user.id}`, fields);
+      setProfile(data);
+      return { error: null };
+    } catch (err) {
+      return { error: err };
+    }
   };
 
   const value = useMemo(

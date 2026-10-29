@@ -49,7 +49,7 @@ const UserMenu = () => {
     );
   }
 
-  const displayName = profile?.full_name || user.email.split("@")[0];
+  const displayName = profile?.full_name || user?.full_name || user.email.split("@")[0];
   const initial = displayName.charAt(0).toUpperCase();
 
   return (

@@ -8,7 +8,7 @@ export default defineConfig({
     proxy: {
       // This correctly forwards your API calls
       '/api': {
-        target: 'http://localhost:1337',
+        target: 'http://localhost:8080',
         changeOrigin: true,
       },
     },

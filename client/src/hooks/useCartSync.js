@@ -1,6 +1,6 @@
 // client/src/hooks/useCartSync.js
 //
-// Keeps the Redux cart and the user's `carts` row in Supabase in step.
+// Keeps the Redux cart and the user's `carts` row in Spring Boot backend in step.
 //
 //   log in  -> merge the guest cart in this browser with the saved server cart
 //   change  -> push the cart up (debounced, so we don't write on every +/- tap)
@@ -8,7 +8,7 @@
 //              doesn't inherit it
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import supabase from "../lib/supabaseClient";
+import apiClient from "../lib/apiClient";
 import { useAuth } from "../context/AuthContext";
 import { setCart } from "../redux/cartReducer";
 
@@ -58,22 +58,26 @@ const useCartSync = () => {
 
     let active = true;
     (async () => {
-      const { data, error } = await supabase
-        .from("carts")
-        .select("items")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      try {
+        const { data } = await apiClient.get(`/cart/${user.id}`);
+        if (!active) return;
 
-      if (!active) return;
-      if (error) {
+        let rawItems = [];
+        if (data?.items) {
+          try {
+            rawItems = typeof data.items === "string" ? JSON.parse(data.items) : data.items;
+          } catch {
+            rawItems = [];
+          }
+        }
+
+        const merged = mergeCarts(products, rawItems);
+        hydratedFor.current = user.id;
+        dispatch(setCart(merged));
+      } catch (error) {
         console.error("Failed to load saved cart:", error.message);
         hydratedFor.current = user.id;
-        return;
       }
-
-      const merged = mergeCarts(products, data?.items ?? []);
-      hydratedFor.current = user.id;
-      dispatch(setCart(merged));
     })();
 
     return () => {
@@ -91,15 +95,12 @@ const useCartSync = () => {
     if (!user || hydratedFor.current !== user.id) return;
 
     const timer = setTimeout(() => {
-      supabase
-        .from("carts")
-        .upsert({
-          user_id: user.id,
-          items: products,
-          updated_at: new Date().toISOString(),
+      apiClient
+        .put(`/cart/${user.id}`, {
+          items: JSON.stringify(products),
         })
-        .then(({ error }) => {
-          if (error) console.error("Failed to save cart:", error.message);
+        .catch((err) => {
+          console.error("Failed to save cart:", err.message);
         });
     }, DEBOUNCE_MS);
 

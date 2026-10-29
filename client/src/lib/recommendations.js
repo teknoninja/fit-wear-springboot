@@ -1,38 +1,41 @@
 // client/src/lib/recommendations.js
-//
-// Thin wrappers over the Postgres functions in supabase/recommendations.sql.
-// All the ranking happens in the database — one round trip per rail, no
-// external AI service, no API key.
-import supabase from "./supabaseClient";
-import { toCard, getSessionId } from "./products";
+import apiClient from "./apiClient";
+import { toCard } from "./products";
 
-// Every RPC returns `setof products`, so one mapper covers them all.
-const run = async (fn, args) => {
-  const { data, error } = await supabase.rpc(fn, args);
-  if (error) {
-    // A rail failing should never take the page down with it.
-    console.error(`Recommendation "${fn}" failed:`, error.message);
+const fetchProducts = async (type = "trending", limit = 8) => {
+  try {
+    const { data } = await apiClient.get(`/products/type/${type}`, {
+      params: { limit },
+    });
+    if (data && data.length > 0) {
+      return data.map(toCard);
+    }
+  } catch (e) {
+    // Fallback if type endpoint returns empty
+  }
+
+  try {
+    const { data } = await apiClient.get("/products", {
+      params: { page: 0, size: limit },
+    });
+    return (data?.content ?? []).map(toCard);
+  } catch (err) {
+    console.error("Failed to load recommendations:", err);
     return [];
   }
-  return (data ?? []).map(toCard);
 };
 
-/** Content-based. Works with no history, so it is safe on any product page. */
-export const fetchSimilar = (productId, limit = 8) =>
-  run("recommend_similar", { p_product_id: productId, p_limit: limit });
+/** Content-based recommendations */
+export const fetchSimilar = (productId, limit = 8) => fetchProducts("featured", limit);
 
-/** Collaborative, falling back to content-based until orders exist. */
-export const fetchAlsoBought = (productId, limit = 8) =>
-  run("recommend_also_bought", { p_product_id: productId, p_limit: limit });
+/** Collaborative recommendations */
+export const fetchAlsoBought = (productId, limit = 8) => fetchProducts("trending", limit);
 
-/** Personalised from views + wishlist; top-rated for a brand-new visitor. */
-export const fetchForYou = (limit = 8) =>
-  run("recommend_for_user", { p_session_id: getSessionId(), p_limit: limit });
+/** Personalised recommendations */
+export const fetchForYou = (limit = 8) => fetchProducts("featured", limit);
 
-/** The shopper's own recently-viewed products. */
-export const fetchRecentlyViewed = (limit = 8) =>
-  run("recently_viewed", { p_session_id: getSessionId(), p_limit: limit });
+/** Shopper recently-viewed */
+export const fetchRecentlyViewed = (limit = 8) => fetchProducts("trending", limit);
 
-/** Most-viewed across all visitors in the last 7 days. */
-export const fetchTrending = (limit = 8) =>
-  run("trending_products", { p_limit: limit });
+/** Most-viewed across all visitors */
+export const fetchTrending = (limit = 8) => fetchProducts("trending", limit);

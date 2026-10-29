@@ -50,10 +50,15 @@ const Cart = () => {
         }
       );
 
-      // 2. Redirect to Stripe's checkout page using the session ID.
-      await stripe.redirectToCheckout({ sessionId: response.data.id });
+      // 2. Redirect to Stripe's checkout page using the URL or session ID.
+      if (response.data?.url) {
+        window.location.href = response.data.url;
+      } else if (response.data?.id) {
+        await stripe.redirectToCheckout({ sessionId: response.data.id });
+      }
     } catch (err) {
-      console.log(err);
+      console.error("Checkout error:", err);
+      alert(err.response?.data?.error || "Checkout failed. Please try again.");
       setBusy(false);
     }
   };

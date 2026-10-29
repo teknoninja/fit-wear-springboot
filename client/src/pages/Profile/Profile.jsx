@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
-import supabase from "../../lib/supabaseClient";
+import apiClient from "../../lib/apiClient";
 import { useAuth } from "../../context/AuthContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { addToCart } from "../../redux/cartReducer";
@@ -142,29 +142,45 @@ const OrdersTab = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     if (!user) return;
     let active = true;
 
-    // One query for orders + their items. RLS restricts this to the current
-    // user's rows, so there is no need to filter defensively on the client.
-    supabase
-      .from("orders")
-      .select("*, order_items(*)")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .then(({ data, error: queryError }) => {
+    const loadOrders = async () => {
+      setLoading(true);
+      const isSuccess = searchParams.get("success");
+      const sessionId = searchParams.get("session_id");
+
+      if (isSuccess === "true" && sessionId) {
+        try {
+          await apiClient.post("/checkout/confirm", { sessionId });
+          // Clear query params from the URL so page refreshes don't re-trigger confirmation
+          setSearchParams({}, { replace: true });
+        } catch (e) {
+          console.error("Failed to confirm order from session:", e);
+        }
+      }
+
+      try {
+        const { data } = await apiClient.get(`/orders/user/${user.id}`);
         if (!active) return;
-        if (queryError) setError(queryError.message);
         setOrders(data ?? []);
-        setLoading(false);
-      });
+      } catch (err) {
+        if (!active) return;
+        setError(err.message || "Failed to load orders");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    loadOrders();
 
     return () => {
       active = false;
     };
-  }, [user?.id]);
+  }, [user?.id, searchParams]);
 
   if (loading) return <div className="tabPanel muted">Loading your orders…</div>;
   if (error) return <div className="tabPanel alert error">{error}</div>;
@@ -290,7 +306,7 @@ const Profile = ({ defaultTab = "details" }) => {
   const navigate = useNavigate();
   const [tab, setTab] = useState(defaultTab);
 
-  const displayName = profile?.full_name || user?.email?.split("@")[0] || "there";
+  const displayName = profile?.full_name || user?.full_name || user?.email?.split("@")[0] || "there";
   const initial = displayName.charAt(0).toUpperCase();
 
   const handleSignOut = async () => {

@@ -1,21 +1,23 @@
 // client/src/context/WishlistContext.jsx
 //
-// Backs the heart icons. Items live in Supabase (one row per user+product), so
-// a wishlist follows the user across devices. Signed-out users get a prompt to
-// log in rather than a silently-dropped click.
+// Backs the heart icons. Items live in the Spring Boot database.
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import supabase from "../lib/supabaseClient";
+import apiClient from "../lib/apiClient";
 import { useAuth } from "./AuthContext";
 
 const WishlistContext = createContext(null);
 
-// Exported next to the provider on purpose — it only costs full-file HMR here.
 // eslint-disable-next-line react-refresh/only-export-components
 export const useWishlist = () => {
   const ctx = useContext(WishlistContext);
   if (!ctx) throw new Error("useWishlist must be used inside <WishlistProvider>");
   return ctx;
 };
+
+const normalizeItem = (item) => ({
+  ...item,
+  product_id: item.productId ?? item.product_id,
+});
 
 export const WishlistProvider = ({ children }) => {
   const { user } = useAuth();
@@ -31,15 +33,17 @@ export const WishlistProvider = ({ children }) => {
     let active = true;
     setLoading(true);
 
-    supabase
-      .from("wishlist")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
+    apiClient
+      .get(`/wishlist/${user.id}`)
+      .then(({ data }) => {
         if (!active) return;
-        if (error) console.error("Failed to load wishlist:", error.message);
-        setItems(data ?? []);
+        const normalized = (data ?? []).map(normalizeItem);
+        setItems(normalized);
+        setLoading(false);
+      })
+      .catch((error) => {
+        if (!active) return;
+        console.error("Failed to load wishlist:", error.message);
         setLoading(false);
       });
 
@@ -49,61 +53,64 @@ export const WishlistProvider = ({ children }) => {
   }, [user?.id]);
 
   const isWishlisted = useCallback(
-    (productId) => items.some((i) => i.product_id === productId),
+    (productId) => items.some((i) => (i.product_id ?? i.productId) === productId),
     [items]
   );
 
   const add = async (product) => {
     if (!user) return { error: new Error("AUTH_REQUIRED") };
 
-    const row = {
-      user_id: user.id,
-      product_id: product._id,
+    const payload = {
+      userId: user.id,
+      productId: product._id,
       title: product.title,
       price: product.price,
       img: product.img,
     };
 
     // Optimistic: the heart fills instantly, and we roll back if the write fails.
-    const optimistic = { ...row, id: `temp-${product._id}` };
+    const optimistic = { ...payload, id: `temp-${product._id}`, product_id: product._id };
     setItems((prev) => [optimistic, ...prev]);
 
-    const { data, error } = await supabase
-      .from("wishlist")
-      .upsert(row, { onConflict: "user_id,product_id" })
-      .select()
-      .single();
-
-    if (error) {
+    try {
+      const { data } = await apiClient.post("/wishlist", payload);
+      const normalized = normalizeItem(data);
+      // Swap the temp row for the real one so we have its DB id.
+      setItems((prev) => prev.map((i) => (i.id === optimistic.id ? normalized : i)));
+      return { error: null };
+    } catch (err) {
       setItems((prev) => prev.filter((i) => i.id !== optimistic.id));
-      return { error };
+      return { error: err };
     }
-    // Swap the temp row for the real one so we have its DB id.
-    setItems((prev) => prev.map((i) => (i.id === optimistic.id ? data : i)));
-    return { error: null };
   };
 
   const remove = async (productId) => {
     if (!user) return { error: new Error("AUTH_REQUIRED") };
 
     const previous = items;
-    setItems((prev) => prev.filter((i) => i.product_id !== productId));
+    setItems((prev) => prev.filter((i) => (i.product_id ?? i.productId) !== productId));
 
-    const { error } = await supabase
-      .from("wishlist")
-      .delete()
-      .eq("user_id", user.id)
-      .eq("product_id", productId);
-
-    if (error) setItems(previous);
-    return { error };
+    try {
+      await apiClient.delete(`/wishlist/${user.id}/product/${productId}`);
+      return { error: null };
+    } catch (err) {
+      setItems(previous);
+      return { error: err };
+    }
   };
 
   const toggle = async (product) =>
     isWishlisted(product._id) ? remove(product._id) : add(product);
 
   const value = useMemo(
-    () => ({ items, count: items.length, loading, isWishlisted, add, remove, toggle }),
+    () => ({
+      items,
+      loading,
+      isWishlisted,
+      add,
+      remove,
+      toggle,
+    }),
     [items, loading, isWishlisted]
   );
 
