@@ -1,0 +1,120 @@
+.searchPage {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 30px 80px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: calc(100vh - 80px);
+
+  .searchPageForm {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 640px;
+    padding: 8px 8px 8px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+
+    &:focus-within {
+      border-color: var(--accent);
+    }
+
+    svg {
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 16px;
+      padding: 6px 0;
+
+      &::placeholder {
+        color: var(--text-dim);
+      }
+
+      &::-webkit-search-cancel-button {
+        display: none;
+      }
+    }
+
+    button {
+      flex-shrink: 0;
+      padding: 10px 22px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--accent-hover);
+        border-color: transparent;
+      }
+    }
+  }
+
+  .searchSummary {
+    margin: 26px 0 30px;
+    color: var(--text-muted);
+    font-size: 15px;
+  }
+
+  .searchResults {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+  }
+
+  // Keeps a short final row left-aligned instead of stretched across the grid.
+  .searchResults::after {
+    content: "";
+    flex: auto;
+  }
+
+  .searchEmpty {
+    padding: 60px 0;
+    text-align: center;
+
+    h2 {
+      font-size: 24px;
+      margin: 0 0 8px;
+    }
+
+    p {
+      color: var(--text-muted);
+      margin: 0 0 24px;
+    }
+  }
+
+  .searchChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .searchChip {
+    padding: 8px 18px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    text-transform: capitalize;
+
+    &:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+  }
+}

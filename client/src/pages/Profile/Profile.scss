@@ -1,0 +1,433 @@
+.profile {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+  color: var(--text);
+  width: 100%;
+  box-sizing: border-box;
+
+  .profileHeader {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+
+    .avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 26px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    .headerText {
+      flex: 1;
+      min-width: 0;
+
+      h1 {
+        font-size: 26px;
+        line-height: 1.2;
+        margin: 0 0 4px;
+      }
+
+      span {
+        color: var(--text-muted);
+        font-size: 14px;
+      }
+    }
+
+    .signOutBtn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--danger);
+      cursor: pointer;
+      transition: background-color 0.2s;
+      flex-shrink: 0;
+
+      &:hover {
+        background: rgba(255, 90, 82, 0.12);
+        border-color: rgba(255, 90, 82, 0.32);
+      }
+    }
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin: 28px 0 32px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+
+    .tab {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      border-radius: 0;
+      padding: 12px 20px;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.2s, border-color 0.2s;
+
+      &:hover {
+        color: var(--text);
+        border-color: transparent;
+        border-bottom-color: var(--border);
+      }
+
+      &.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+    }
+  }
+
+  .tabPanel {
+    &.muted {
+      color: var(--text-muted);
+      padding: 40px 0;
+    }
+  }
+
+  .alert {
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 8px;
+
+    &.error {
+      background: rgba(255, 90, 82, 0.12);
+      color: var(--danger);
+      border: 1px solid rgba(255, 90, 82, 0.32);
+    }
+
+    &.success {
+      background: rgba(61, 220, 132, 0.12);
+      color: var(--success);
+      border: 1px solid rgba(61, 220, 132, 0.32);
+    }
+  }
+
+  .primaryBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.2s;
+
+    &:hover:not(:disabled) {
+      background: var(--accent-hover);
+      border-color: transparent;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    &.small {
+      padding: 9px 14px;
+      font-size: 12px;
+    }
+  }
+
+  .iconBtn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px;
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.2s, background-color 0.2s;
+
+    &:hover {
+      color: var(--danger);
+      background: rgba(255, 90, 82, 0.12);
+      border-color: rgba(255, 90, 82, 0.32);
+    }
+  }
+
+  // --- My details ----------------------------------------------------------
+  .detailsForm {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    max-width: 640px;
+
+    h3 {
+      margin: 14px 0 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .fieldRow {
+      display: flex;
+      gap: 18px;
+
+      label {
+        flex: 1;
+        min-width: 0;
+      }
+
+      @media (max-width: 600px) {
+        flex-direction: column;
+      }
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    input {
+      padding: 11px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--surface-2);
+      width: 100%;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+
+      &:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      &:disabled {
+        background: var(--surface-2);
+        color: var(--text-muted);
+        cursor: not-allowed;
+      }
+    }
+
+    .primaryBtn {
+      align-self: flex-start;
+      margin-top: 10px;
+    }
+  }
+
+  // --- Orders --------------------------------------------------------------
+  .orderList {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .orderCard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+
+    .orderHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+
+      .orderId {
+        display: block;
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .orderDate {
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+
+      .orderMeta {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .orderTotal {
+        font-weight: 600;
+        font-size: 16px;
+      }
+
+      .status {
+        text-transform: uppercase;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        padding: 4px 10px;
+        border-radius: 999px;
+
+        &.paid {
+          background: rgba(61, 220, 132, 0.12);
+          color: var(--success);
+        }
+        &.pending {
+          background: rgba(255, 193, 77, 0.14);
+          color: #ffc94d;
+        }
+        &.failed {
+          background: rgba(255, 90, 82, 0.12);
+          color: var(--danger);
+        }
+        &.refunded {
+          background: var(--border);
+          color: var(--text-muted);
+        }
+      }
+    }
+
+    .orderItems {
+      padding: 8px 20px 16px;
+    }
+
+    .orderItem {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      img {
+        width: 56px;
+        height: 72px;
+        object-fit: cover;
+        border-radius: 6px;
+        flex-shrink: 0;
+      }
+
+      .orderItemInfo {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        min-width: 0;
+      }
+
+      .itemTitle {
+        font-weight: 500;
+        font-size: 15px;
+      }
+
+      .itemQty {
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+    }
+  }
+
+  // --- Wishlist ------------------------------------------------------------
+  .wishlistGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 24px;
+  }
+
+  .wishlistCard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    img {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .wishlistInfo {
+      padding: 14px 14px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .wishlistTitle {
+      font-weight: 500;
+      font-size: 15px;
+      color: var(--text);
+      text-decoration: none;
+
+      &:hover {
+        color: var(--accent);
+      }
+    }
+
+    .wishlistPrice {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .wishlistActions {
+      display: flex;
+      gap: 8px;
+      padding: 0 14px 14px;
+
+      .primaryBtn {
+        flex: 1;
+      }
+    }
+  }
+
+  // --- Empty states --------------------------------------------------------
+  .emptyState {
+    text-align: center;
+    padding: 60px 20px;
+
+    h3 {
+      font-size: 20px;
+      margin: 0 0 8px;
+    }
+
+    p {
+      color: var(--text-muted);
+      margin: 0 0 24px;
+    }
+  }
+}
